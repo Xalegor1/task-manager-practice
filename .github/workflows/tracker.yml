@@ -1,0 +1,35 @@
+name: GitHub Projects Automation
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  move-issue-to-done:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Mark linked issues as done
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh label create done --color 0E8A16 --description "Completed via merged PR" --force
+          ISSUES=$(echo "$PR_BODY" | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' | grep -oE '[0-9]+' || true)
+          if [ -z "$ISSUES" ]; then
+            echo "No linked issues found in PR description."
+            exit 0
+          fi
+          for ISSUE in $ISSUES; do
+            gh issue edit "$ISSUE" --add-label done
+            gh issue comment "$ISSUE" --body "Completed by PR #$PR_NUMBER (merged). Moved to Done."
+            echo "Issue #$ISSUE marked as done."
+          done
