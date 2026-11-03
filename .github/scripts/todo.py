@@ -48,12 +48,12 @@ def main():
     pool.populate()
 
     task_titles = [task.title for task in pool.get_open_tasks()]
-    print("ToDo tasks:")
+    print("ToDo Tasks:")
     for title in task_titles:
         print(title)
 
     completed_titles = [task.title for task in pool.get_done_tasks()]
-    print("\nDone tasks:")
+    print("\nDone Tasks:")
     for title in completed_titles:
         print(title)
 
